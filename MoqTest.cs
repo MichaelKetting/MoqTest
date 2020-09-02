@@ -11,8 +11,8 @@ namespace MoqTest
     public void Setup_ExtraCall_Strict ()
     {
       var myMock = new Mock<IMyInterface> (MockBehavior.Strict);
-      myMock.Setup (x => x.DoTheThing ("A")).Returns ("1");
-      myMock.Setup (x => x.DoTheThing ("B")).Returns ("2");
+      myMock.Setup (x => x.DoTheThing ("A")).Returns ("1").Verifiable();
+      myMock.Setup (x => x.DoTheThing ("B")).Returns ("2").Verifiable();
 
       // Act
       Assert.That (myMock.Object.DoTheThing ("A"), Is.EqualTo ("1"));
@@ -23,7 +23,7 @@ namespace MoqTest
               "IMyInterface.DoTheThing(\"C\") invocation failed with mock behavior Strict.\nAll invocations on the mock must have a corresponding setup."));
 
       myMock.Verify();
-      // Strict mocks do not fail in Verify() if not all calls have been set up.
+      // Strict mocks do not fail in Verify() if not all calls have been set up. They fail at the call site.
 
       Assert.That (
           () => myMock.VerifyNoOtherCalls(),
@@ -31,8 +31,6 @@ namespace MoqTest
               "Mock<IMyInterface:").And.Message.EndWith (">:\n"
               + "This mock failed verification due to the following unverified invocations:\r\n"
               + "\r\n"
-              + "   IMyInterface.DoTheThing(\"A\")\r\n"
-              + "   IMyInterface.DoTheThing(\"B\")\r\n"
               + "   IMyInterface.DoTheThing(\"C\")"));
     }
 
@@ -40,8 +38,8 @@ namespace MoqTest
     public void Setup_ExtraCall_Loose ()
     {
       var myMock = new Mock<IMyInterface> (MockBehavior.Loose);
-      myMock.Setup (x => x.DoTheThing ("A")).Returns ("1");
-      myMock.Setup (x => x.DoTheThing ("B")).Returns ("2");
+      myMock.Setup (x => x.DoTheThing ("A")).Returns ("1").Verifiable();
+      myMock.Setup (x => x.DoTheThing ("B")).Returns ("2").Verifiable();
 
       // Act
       Assert.That (myMock.Object.DoTheThing ("A"), Is.EqualTo ("1"));
@@ -49,7 +47,7 @@ namespace MoqTest
       Assert.That (() => myMock.Object.DoTheThing ("C"), Is.Null);
 
       myMock.Verify();
-      // Loose mocks do not fail in Verify() if not all calls have been set up.
+      // Loose mocks do not fail in Verify() or at the call site if not all calls have been set up.
 
       Assert.That (
           () => myMock.VerifyNoOtherCalls(),
@@ -57,8 +55,6 @@ namespace MoqTest
               "Mock<IMyInterface:").And.Message.EndWith (">:\n"
               + "This mock failed verification due to the following unverified invocations:\r\n"
               + "\r\n"
-              + "   IMyInterface.DoTheThing(\"A\")\r\n"
-              + "   IMyInterface.DoTheThing(\"B\")\r\n"
               + "   IMyInterface.DoTheThing(\"C\")"));
     }
 
@@ -66,58 +62,52 @@ namespace MoqTest
     public void Setup_NotAllSetupsAreUsed_Strict ()
     {
       var myMock = new Mock<IMyInterface> (MockBehavior.Strict);
-      myMock.Setup (x => x.DoTheThing ("A")).Returns ("1");
-      myMock.Setup (x => x.DoTheThing ("B")).Returns ("2");
-      myMock.Setup (x => x.DoTheThing ("C")).Returns ("3");
+      myMock.Setup (x => x.DoTheThing ("A")).Returns ("1").Verifiable();
+      myMock.Setup (x => x.DoTheThing ("B")).Returns ("2").Verifiable();
+      myMock.Setup (x => x.DoTheThing ("C")).Returns ("3").Verifiable();
 
       // Act
       Assert.That (myMock.Object.DoTheThing ("A"), Is.EqualTo ("1"));
       Assert.That (myMock.Object.DoTheThing ("C"), Is.EqualTo ("3"));
 
-      myMock.Verify();
-      // Strict mocks do not fail in Verify() if not all setups have been used.
-
       Assert.That (
-          () => myMock.VerifyNoOtherCalls(),
+          () => myMock.Verify(),
           Throws.TypeOf<MockException>().With.Message.StartWith (
               "Mock<IMyInterface:").And.Message.EndWith (">:\n"
-              + "This mock failed verification due to the following unverified invocations:\r\n"
+              + "This mock failed verification due to the following:\r\n"
               + "\r\n"
-              + "   IMyInterface.DoTheThing(\"A\")\r\n"
-              + "   IMyInterface.DoTheThing(\"C\")"));
+              + "   IMyInterface x => x.DoTheThing(\"B\"):\n"
+              + "   This setup was not matched."));
     }
 
     [Test]
     public void Setup_NotAllSetupsAreUsed_Loose ()
     {
       var myMock = new Mock<IMyInterface> (MockBehavior.Loose);
-      myMock.Setup (x => x.DoTheThing ("A")).Returns ("1");
-      myMock.Setup (x => x.DoTheThing ("B")).Returns ("2");
-      myMock.Setup (x => x.DoTheThing ("C")).Returns ("3");
+      myMock.Setup (x => x.DoTheThing ("A")).Returns ("1").Verifiable();
+      myMock.Setup (x => x.DoTheThing ("B")).Returns ("2").Verifiable();
+      myMock.Setup (x => x.DoTheThing ("C")).Returns ("3").Verifiable();
 
       // Act
       Assert.That (myMock.Object.DoTheThing ("A"), Is.EqualTo ("1"));
       Assert.That (myMock.Object.DoTheThing ("C"), Is.EqualTo ("3"));
 
-      myMock.Verify();
-      // Loose mocks do not fail in Verify() if not all setups have been used.
-
       Assert.That (
-          () => myMock.VerifyNoOtherCalls(),
+          () => myMock.Verify(),
           Throws.TypeOf<MockException>().With.Message.StartWith (
               "Mock<IMyInterface:").And.Message.EndWith (">:\n"
-              + "This mock failed verification due to the following unverified invocations:\r\n"
+              + "This mock failed verification due to the following:\r\n"
               + "\r\n"
-              + "   IMyInterface.DoTheThing(\"A\")\r\n"
-              + "   IMyInterface.DoTheThing(\"C\")"));
+              + "   IMyInterface x => x.DoTheThing(\"B\"):\n"
+              + "   This setup was not matched."));
     }
 
     [Test]
     public void Setup_OverrideSameParameters_Strict ()
     {
       var myMock = new Mock<IMyInterface> (MockBehavior.Strict);
-      myMock.Setup (x => x.DoTheThing ("A")).Returns ("1");
-      myMock.Setup (x => x.DoTheThing ("A")).Returns ("2");
+      myMock.Setup (x => x.DoTheThing ("A")).Returns ("1").Verifiable();
+      myMock.Setup (x => x.DoTheThing ("A")).Returns ("2").Verifiable();
 
       // Act
       Assert.That (myMock.Object.DoTheThing ("A"), Is.EqualTo ("2"));
@@ -134,21 +124,22 @@ namespace MoqTest
       myMock.SetupSequence (x => x.DoTheThing ("A")).Returns ("1").Returns ("2");
 
       // Act
-      myMock.Object.DoTheThing ("A");
-
-      myMock.Verify();
+      Assert.That (myMock.Object.DoTheThing ("A"), Is.EqualTo ("1"));
+      Assert.That (myMock.Object.DoTheThing ("A"), Is.EqualTo ("2"));
     }
 
     [Test]
-    public void InSequence_NotAllSetupAreUsed ()
+    public void InSequence_LastSetupNotUsed ()
     {
       var myMock = new Mock<IMyInterface> (MockBehavior.Strict);
       var sequence = new MockSequence();
       myMock.InSequence (sequence).Setup (x => x.DoTheThing ("A")).Returns ("1");
       myMock.InSequence (sequence).Setup (x => x.DoTheThing ("A")).Returns ("2");
+      myMock.InSequence (sequence).Setup (x => x.DoTheThing ("A")).Returns ("3");
 
       // Act
       Assert.That (myMock.Object.DoTheThing ("A"), Is.EqualTo ("1"));
+      Assert.That (myMock.Object.DoTheThing ("A"), Is.EqualTo ("2"));
 
       myMock.Verify();
       // Strict mocks do not fail verification if not all setups have been used.
@@ -159,6 +150,7 @@ namespace MoqTest
               "Mock<IMyInterface:").And.Message.EndWith (">:\n"
               + "This mock failed verification due to the following unverified invocations:\r\n"
               + "\r\n"
+              + "   IMyInterface.DoTheThing(\"A\")\r\n"
               + "   IMyInterface.DoTheThing(\"A\")"));
     }
 
