@@ -333,8 +333,8 @@ namespace MoqTest
     public void MultiMocks_RetainOriginalSetupsAfterCast ()
     {
       var myMock = new Mock<IMyInterface> (MockBehavior.Strict);
-      myMock.Setup (x => x.DoTheThing("1")).Returns("1").Verifiable();
-      myMock.Setup (x => x.DoTheThing("2")).Returns("2").Verifiable();
+      myMock.Setup (x => x.DoTheThing ("1")).Returns ("1").Verifiable();
+      myMock.Setup (x => x.DoTheThing ("2")).Returns ("2").Verifiable();
 
       var myMockWithExtraSteps = myMock.As<IDisposable>().As<IMyInterface>();
 
