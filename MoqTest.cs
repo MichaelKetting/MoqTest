@@ -328,5 +328,53 @@ namespace MoqTest
               + "\r\n"
               + "   IMyInterface.DoTheThing(\"A\")"));
     }
+
+    [Test]
+    public void MultiMocks_MockForOtherInterfaceRetainsOriginalSetup ()
+    {
+      var myMock = new Mock<IMyInterface> (MockBehavior.Strict);
+      myMock.Setup (x => x.DoTheThing ("1")).Returns ("1").Verifiable();
+      myMock.Setup (x => x.DoTheThing ("2")).Returns ("2").Verifiable();
+
+      var myMockWithExtraSteps = myMock.As<IDisposable>();
+
+      myMock.Object.DoTheThing ("1");
+
+      Assert.That (myMockWithExtraSteps.Object, Is.InstanceOf<IMyInterface>());
+      Assert.That (myMockWithExtraSteps.Object, Is.InstanceOf<IDisposable>());
+
+      Assert.That (
+          () => myMockWithExtraSteps.Verify(),
+          Throws.TypeOf<MockException>().With.Message.StartWith (
+              "Mock<IMyInterface:").And.Message.EndWith (">:\n"
+              + "This mock failed verification due to the following:\r\n"
+              + "\r\n"
+              + "   IMyInterface x => x.DoTheThing(\"2\"):\n"
+              + "   This setup was not matched."));
+    }
+
+    [Test]
+    public void MultiMocks_OriginalMockContainsSetupFromOtherInterface ()
+    {
+      var myMock = new Mock<IMyInterface> (MockBehavior.Strict);
+      myMock.Setup (x => x.DoTheThing ("1")).Returns ("1").Verifiable();
+
+      var myMockWithExtraSteps = myMock.As<IDisposable>();
+      myMockWithExtraSteps.Setup (x => x.Dispose()).Verifiable();
+
+      myMock.Object.DoTheThing ("1");
+
+      Assert.That (myMockWithExtraSteps.Object, Is.InstanceOf<IMyInterface>());
+      Assert.That (myMockWithExtraSteps.Object, Is.InstanceOf<IDisposable>());
+
+      Assert.That (
+          () => myMock.Verify(),
+          Throws.TypeOf<MockException>().With.Message.StartWith (
+              "Mock<IMyInterface:").And.Message.EndWith (">:\n"
+              + "This mock failed verification due to the following:\r\n"
+              + "\r\n"
+              + "   IDisposable x => x.Dispose():\n"
+              + "   This setup was not matched."));
+    }
   }
 }
