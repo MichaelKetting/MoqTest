@@ -328,5 +328,26 @@ namespace MoqTest
               + "\r\n"
               + "   IMyInterface.DoTheThing(\"A\")"));
     }
+
+    [Test]
+    public void MultiMocks_RetainOriginalSetupsAfterCast ()
+    {
+      var myMock = new Mock<IMyInterface> (MockBehavior.Strict);
+      myMock.Setup (x => x.DoTheThing("1")).Returns("1").Verifiable();
+      myMock.Setup (x => x.DoTheThing("2")).Returns("2").Verifiable();
+
+      var myMockWithExtraSteps = myMock.As<IDisposable>().As<IMyInterface>();
+
+      myMock.Object.DoTheThing ("1");
+
+      Assert.That (
+          () => myMockWithExtraSteps.Verify(),
+          Throws.TypeOf<MockException>().With.Message.StartWith (
+              "Mock<IMyInterface:").And.Message.EndWith (">:\n"
+                                                         + "This mock failed verification due to the following:\r\n"
+                                                         + "\r\n"
+                                                         + "   IMyInterface x => x.DoTheThing(\"2\"):\n"
+                                                         + "   This setup was not matched."));
+    }
   }
 }
