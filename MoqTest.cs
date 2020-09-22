@@ -18,6 +18,8 @@ namespace MoqTest
     // extra call = call that invoked but not set up
     // missing call = call that was set up but not invoked
 
+    //TODO: Expression-Arguments (ItExpr vs It)
+
     [Test]
     public void Setup_Verifiable_ExtraCall_Strict_FailsDuringInvocation ()
     {
